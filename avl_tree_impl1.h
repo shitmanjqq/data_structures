@@ -41,6 +41,53 @@ class AvlTree {
   public:
     AvlTree() : root_(nullptr) {}
 
+    const Comparable &findMin() const {
+        if (!root_) {
+            throw EmptyTree();
+        }
+
+        auto node = root_;
+        while (node->left_) {
+            node = node->left_;
+        }
+
+        return node->element_;
+    }
+
+    const Comparable &findMax() const {
+        if (!root_) {
+            throw EmptyTree();
+        }
+
+        auto node = root_;
+        while (node->right_) {
+            node = node->right_;
+        }
+
+        return node->element_;
+    }
+
+    bool contains(const Comparable &e) const noexcept {
+        auto node = root_;
+        while (node) {
+            if (e < node->element_) {
+                node = node->left_;
+            } else if (node->element_ < e) {
+                node = node->right_;
+            } else {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    void printTree(std::ostream &os = std::cout) const {
+        if (root_) {
+            printTree(os, root_);
+        }
+    }
+
     template <typename T, typename = enable_if_t<std::is_convertible<T, Comparable>>>
     void insert(T &&e) {
         std::pair<AvlNode **, int> parents[128];
@@ -72,7 +119,7 @@ class AvlTree {
 
             if (0 == temp->balance_) {
                 temp->balance_ += p_ref.second;
-            } else if ((temp->balance_ ^ p_ref.second)) {
+            } else if ((temp->balance_ ^ p_ref.second) < 0) {
                 temp->balance_ += p_ref.second;
                 break;
             } else {
@@ -104,19 +151,71 @@ class AvlTree {
 
         int index = 0;
         auto node = root_;
+        
         while (node) {
             if (node->element_ < e) {
-                parents[index].second = 1;
+                parents[index].second = -1;
                 parents[++index].first = &node->right_;
                 node = node->right_;
             } else if (e < node->element_) {
                 // parents[index++] = std::make_pair(&node->left_, -1);
-                parents[index].second = -1;
+                parents[index].second = 1;
                 parents[++index].first = &node->left_;
                 node = node->left_;
             } else {
                 // return;
                 // find element
+                if (node->right_ && node->left_) {
+                    // change and delete the min of right child
+                    auto find_node = node;
+                    // node = 
+                    parents[index].second = -1;
+                    parents[++index].first = &node->right_;
+                    node = node->right_;
+                    while (node->left_) {
+                        parents[index].second = 1;
+                        parents[++index].first = &node->left_;
+                        node = node->left_;
+                    }
+
+                    find_node->element_ = std::move(node->element_);
+                }
+
+                auto delete_node = *(parents[index].first);
+                *(parents[index].first) = delete_node->left_ ? delete_node->left_ : delete_node->right_;
+                delete delete_node;
+
+                for (--index; index >= 0; --index) {
+                    const auto &p_ref = parents[index];
+                    auto temp = *p_ref.first;
+
+                    if (0 == temp->balance_) {
+                        temp->balance_ += p_ref.second;
+                        return;
+                    } else if ((temp->balance_ ^ p_ref.second) < 0) {
+                        temp->balance_ += p_ref.second;
+                        // break;
+                    } else {
+                        temp->balance_ += p_ref.second;
+                        if (temp->balance_ < -ALLOWED_IMBALANCE) {
+                            assert((temp->left_->right_ || temp->left_->left_) && "111111111111111111111111111");
+                            if (temp->left_->balance_ <= 0) {
+                                single_rorate_left_child(p_ref.first);
+                            } else {
+                                double_rorate_left_child(p_ref.first);
+                            }
+                            // break;
+                        } else if (temp->balance_ > ALLOWED_IMBALANCE) {
+                            assert((temp->right_->right_ || temp->right_->left_) && "222222222222222222222222222");
+                            if (temp->right_->balance_ >= 0) {
+                                single_rorate_right_child(p_ref.first);
+                            } else {
+                                double_rorate_right_child(p_ref.first);
+                            }
+                            // break;
+                        }
+                    }
+                }
             }
         };
 
@@ -199,6 +298,16 @@ class AvlTree {
             if (result_right->balance_ > 0) {
                 result_parent->balance_ = 1 + temp;
             }
+        }
+    }
+
+    void printTree(std::ostream &os, const AvlNode *node) const {
+        if (node->left_) {
+            printTree(os, node->left_);
+        }
+        os << node->element_ << std::endl;
+        if (node->right_) {
+            printTree(os, node->right_);
         }
     }
 };

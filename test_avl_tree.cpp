@@ -7,37 +7,16 @@ using namespace tree;
     // Test program
 int main( )
 {
-    AvlTree<int, 1> t;
-
-    // cout << sizeof (HelperInfo) << endl;
-
-    // t.insert(10);
-    // t.insert(23);
-    // t.insert(8);
-    // t.insert(11);
-    // t.insert(12);
-    // t.insert(3);
-    // t.insert(2);
-    // t.insert(4);
-    // t.insert(90);
-    // t.printTree();
-    // return 0;
-    int NUMS = 2000000;
+    AvlTree<int> t;
+    int NUMS = 20000000;
     const int GAP  =   37;
     int i;
 
     cout << "Checking... (no more output means success)" << endl;
 
-    // int total = 0;
-    for( i = GAP; i != 0; i = ( i + GAP ) % NUMS ) {
+    for( i = GAP; i != 0; i = ( i + GAP ) % NUMS )
         t.insert( i );
-        // cout << ++total << endl;
-    }
-        // t.insert( i );
-
-    // cout << "==========================" << endl;
-    return 0;
-
+    // return 0;
     t.remove( 0 );
     for( i = 1; i < NUMS; i += 2 )
         t.remove( i );
@@ -56,8 +35,8 @@ int main( )
         if( t.contains( i )  )
             cout << "Find error2!" << endl;
     }
-#if 1
-    decltype(t) t2;
+#if 0
+    AvlTree<int> t2;
     t2 = t;
 
     for( i = 2; i < NUMS; i += 2 )
